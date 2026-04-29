@@ -1,2 +1,2 @@
-# bla bla bla teste de resposítorio 
+# bla bla bla teste de resposítorio.
 
