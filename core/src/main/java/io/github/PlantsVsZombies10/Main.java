@@ -24,8 +24,10 @@ public class Main extends ApplicationAdapter {
     private SpriteBatch batch;
     private AssetManager assetManager;
     private BackgroundManager backgroundManager;
-    private Texture image;
     private ShapeRenderer shapeRenderer;
+
+    private Plant peashooter;
+    private Texture peaShooted;
 
     private LoadingScreen loadingScreen;
     private boolean loading = true;
@@ -66,27 +68,29 @@ public class Main extends ApplicationAdapter {
         assetManager = new AssetManager();
         Gdx.input.setInputProcessor(new GameInputProcessor(this));
 
-        assetManager.load("Zombies/cerebro.png", Texture.class);
+        assetManager.load("Plants/peashooter.png", Texture.class);
+        assetManager.load("Bullets/pea-shooted.png", Texture.class);
+
         assetManager.load("Backgrounds/Background_Noite.jpg", Texture.class);
         assetManager.load("Backgrounds/Background.jpg", Texture.class);
         assetManager.load("Zombies/zumbi_125_200.png", Texture.class);
         assetManager.load("Zombies/PC _ Computer - Plants vs. Zombies - Zombies - Regular Zombies.png", Texture.class);
 
-        assetManager.load("sounds/Main Music 01.mp3", Music.class);
-        assetManager.load("sounds/04. Grasswalk.mp3", Music.class);
-        menu = Gdx.audio.newMusic(Gdx.files.internal("sounds/Menu Music.mp3"));
+        assetManager.load("sounds/music/Main Music 01.mp3", Music.class);
+        assetManager.load("sounds/music/04. Grasswalk.mp3", Music.class);
+        menu = Gdx.audio.newMusic(Gdx.files.internal("sounds/music/Menu Music.mp3"));
         menu.setLooping(true);
         menu.setVolume(2.0f);
         menu.play();
 
-        assetManager.load("sounds/SFX chompsoft.ogg", Sound.class);
+        assetManager.load("sounds/affects/SFX chompsoft.ogg", Sound.class);
 
-        assetManager.load("sounds/Voices groan.ogg", Sound.class);
-        assetManager.load("sounds/Voices groan2.ogg", Sound.class);
-        assetManager.load("sounds/Voices groan3.ogg", Sound.class);
-        assetManager.load("sounds/Voices groan4.ogg", Sound.class);
-        assetManager.load("sounds/Voices groan5.ogg", Sound.class);
-        assetManager.load("sounds/Voices groan6.ogg", Sound.class);
+        assetManager.load("sounds/affects/Voices groan.ogg", Sound.class);
+        assetManager.load("sounds/affects/Voices groan2.ogg", Sound.class);
+        assetManager.load("sounds/affects/Voices groan3.ogg", Sound.class);
+        assetManager.load("sounds/affects/Voices groan4.ogg", Sound.class);
+        assetManager.load("sounds/affects/Voices groan5.ogg", Sound.class);
+        assetManager.load("sounds/affects/Voices groan6.ogg", Sound.class);
 
         loadingScreen = new LoadingScreen(assetManager, loadingMin);
 
@@ -115,8 +119,8 @@ public class Main extends ApplicationAdapter {
 
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
 
-        Xmax = Gdx.graphics.getWidth() - image.getWidth();
-        Ymax = Gdx.graphics.getHeight() - image.getHeight();
+        Xmax = Gdx.graphics.getWidth() - peashooter.getWidth();
+        Ymax = Gdx.graphics.getHeight() - peashooter.getHeight();
 
         float speed = 0;
         switch (estado){
@@ -147,10 +151,10 @@ public class Main extends ApplicationAdapter {
         }
 
         backgroundManager.update(delta);
-        world.update(delta, XStep, YStep, image.getWidth(), image.getHeight());
+        world.update(delta, XStep, YStep, peashooter.getWidth(), peashooter.getHeight());
 
         if (cameraFollowBrain) {
-            cam.position.set(XStep + image.getWidth()/2f, YStep + image.getHeight()/2f, 0);
+            cam.position.set(XStep + peashooter.getWidth()/2f, YStep + peashooter.getHeight()/2f, 0);
 
             float halfW = (cam.viewportWidth * cam.zoom)/2f;
             float halfH = (cam.viewportHeight * cam.zoom)/2f;
@@ -165,7 +169,12 @@ public class Main extends ApplicationAdapter {
         batch.begin();
         batch.setProjectionMatrix(cam.combined);
         backgroundManager.render(batch);
-        batch.draw(image, XStep, YStep);
+
+        peashooter.render(batch, XStep, YStep);
+
+        for (Pea p : world.getActivePeas()) {
+            p.render(batch, peaShooted, 0.15f);
+        }
         for (Zombie z : world.getActiveZombies()) {
             z.render(batch, 1f);
         }
@@ -197,9 +206,9 @@ public class Main extends ApplicationAdapter {
 
             // hitbox circular do cérebro
             shapeRenderer.setColor(Color.GREEN);
-            float cx = XStep + image.getWidth() / 2f;
-            float cy = YStep + image.getHeight() / 2f;
-            float r  = Math.min(image.getWidth(), image.getHeight()) / 2f;
+            float cx = XStep + peashooter.getWidth() / 2f;
+            float cy = YStep + peashooter.getHeight() / 2f;
+            float r  = Math.min(peashooter.getWidth(), peashooter.getHeight()) / 2f;
             shapeRenderer.circle(cx, cy, r);
 
             shapeRenderer.end();
@@ -226,9 +235,9 @@ public class Main extends ApplicationAdapter {
 
         if(snapped == null) return;
 
-        X = snapped.x + (frontyardGrid.getTileW()  - image.getWidth())  / 2f;
+        X = snapped.x + (frontyardGrid.getTileW()  - peashooter.getWidth())  / 2f;
         X = clamp(X, Xmin, Xmax);
-        Y = snapped.y + (frontyardGrid.getTileH() - image.getHeight()) / 2f;
+        Y = snapped.y + (frontyardGrid.getTileH() - peashooter.getHeight()) / 2f;
         Y = clamp(Y, Ymin, Ymax);
 
         long agora = TimeUtils.millis();
@@ -254,7 +263,11 @@ public class Main extends ApplicationAdapter {
         Gdx.input.setInputProcessor(new GameInputProcessor(this));
         shapeRenderer = new ShapeRenderer();
 
-        image = assetManager.get("Zombies/cerebro.png", Texture.class);
+        peashooter = new Plant(
+            assetManager.get("Plants/peashooter.png", Texture.class),
+            0.2f
+        );
+        peaShooted = assetManager.get("Bullets/pea-shooted.png", Texture.class);
 
         Texture[] bgs = {
             assetManager.get("Backgrounds/Background_Noite.jpg", Texture.class),
@@ -264,19 +277,19 @@ public class Main extends ApplicationAdapter {
 
         zombieTexture = assetManager.get("Zombies/zumbi_125_200.png", Texture.class);
 
-        zombie1 = assetManager.get("sounds/Voices groan.ogg", Sound.class);
-        zombie2 = assetManager.get("sounds/Voices groan2.ogg", Sound.class);
-        zombie3 = assetManager.get("sounds/Voices groan3.ogg", Sound.class);
-        zombie4 = assetManager.get("sounds/Voices groan4.ogg", Sound.class);
-        zombie5 = assetManager.get("sounds/Voices groan5.ogg", Sound.class);
-        zombie6 = assetManager.get("sounds/Voices groan6.ogg", Sound.class);
+        zombie1 = assetManager.get("sounds/affects/Voices groan.ogg", Sound.class);
+        zombie2 = assetManager.get("sounds/affects/Voices groan2.ogg", Sound.class);
+        zombie3 = assetManager.get("sounds/affects/Voices groan3.ogg", Sound.class);
+        zombie4 = assetManager.get("sounds/affects/Voices groan4.ogg", Sound.class);
+        zombie5 = assetManager.get("sounds/affects/Voices groan5.ogg", Sound.class);
+        zombie6 = assetManager.get("sounds/affects/Voices groan6.ogg", Sound.class);
 
         frontyardGrid = new FrontyardGrid(GRID_COLS, GRID_ROWS, GRID_TILE_W, GRID_TILE_H, GRID_OFFSET_X, GRID_OFFSET_Y);
         gridDebugRenderer = new GridDebugRenderer();
 
         Vector2 firstTile = frontyardGrid.tileBottomLeft(0, 0);
-        X = firstTile.x + (frontyardGrid.getTileW() - image.getWidth()) / 2f;
-        Y = firstTile.y + (frontyardGrid.getTileH() - image.getHeight()) / 2f;
+        X = firstTile.x + (frontyardGrid.getTileW() - peashooter.getWidth()) / 2f;
+        Y = firstTile.y + (frontyardGrid.getTileH() - peashooter.getHeight()) / 2f;
         XStep = X;
         YStep = Y;
         world.setGrid(frontyardGrid);

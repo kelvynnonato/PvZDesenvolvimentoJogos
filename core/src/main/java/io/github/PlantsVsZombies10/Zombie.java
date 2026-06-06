@@ -15,7 +15,7 @@ public class Zombie implements Pool.Poolable{
     public Vector2 speed;
     public boolean alive;
     private static Sound brainEatenSound;
-    private static final String SOUND_PATH = "sounds/SFX chompsoft.ogg";
+    private static final String SOUND_PATH = "sounds/affects/SFX chompsoft.ogg";
 
     private boolean corpoMontado = false;
     private static TextureRegion cabecaZumbi;

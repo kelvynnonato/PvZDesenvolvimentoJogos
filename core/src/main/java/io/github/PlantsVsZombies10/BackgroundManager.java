@@ -15,8 +15,8 @@ public class BackgroundManager {
     private float bgAlpha = 1f;
     private boolean fading = false;
     private static Music day, night;
-    private static String SOUND_PATH_DAY = "sounds/04. Grasswalk.mp3";
-    private static String SOUND_PATH_NIGHT = "sounds/Main Music 01.mp3";
+    private static String SOUND_PATH_DAY = "sounds/music/04. Grasswalk.mp3";
+    private static String SOUND_PATH_NIGHT = "sounds/music/Main Music 01.mp3";
     private boolean musicSwitched = false;
 
     private final float bgInterval;

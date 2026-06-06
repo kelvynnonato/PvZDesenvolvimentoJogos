@@ -26,6 +26,16 @@ public class World {
         }
     };
 
+    private float shootTimer = 0f;
+    public boolean justShot = false;
+    final Array<Pea> activePeas = new Array<Pea>();
+    private final Pool<Pea> peaPool = new Pool<Pea>() {
+        @Override
+        protected Pea newObject() {
+            return new Pea();
+        }
+    };
+
     private FrontyardGrid frontyardGrid;
 
     private final ParticleManager particleManager = new ParticleManager();
@@ -58,10 +68,26 @@ public class World {
         bubble.init(startY); // startY é a Y da lane
         activeBubbles.add(bubble);
     }
-    public void update(float delta, float brainX, float brainY, float brainW, float brainH) {
-        for (int i = activeZombies.size - 1; --i >= 0;) {
+
+    private void spawnPea(float x, float y) {
+        Pea pea = peaPool.obtain();
+        pea.init(x, y);
+        activePeas.add(pea);
+    }
+
+    public void update(float delta, float peashooterX, float peashooterY, float peashooterW, float peashooterH) {
+        //timer da ervilha
+        shootTimer += delta;
+        justShot = false;
+        if(shootTimer >= 0.6f){
+            shootTimer -= 0.6f;
+            spawnPea(peashooterX + peashooterW, peashooterY + peashooterH / 2f);
+            justShot = true;
+        }
+
+        for (int i = activeZombies.size - 1; i >= 0; i--) {
             Zombie item = activeZombies.get(i);
-            item.update(delta, brainX, brainY, brainW, brainH);
+            item.update(delta, peashooterX, peashooterY, peashooterW, peashooterH);
 
             if (!item.alive) {
                 if (item.comeuCerebro) {
@@ -73,6 +99,15 @@ public class World {
                 }
                 activeZombies.removeIndex(i);
                 zombiePool.free(item);
+            }
+        }
+
+        for(int i = activePeas.size - 1; i >= 0; i--) {
+            Pea pea = activePeas.get(i);
+            pea.update(delta);
+            if (!pea.alive) {
+                activePeas.removeIndex(i);
+                peaPool.free(pea);
             }
         }
 
@@ -88,6 +123,10 @@ public class World {
 
     public Array<SpeechBubble> getActiveBubbles() {
         return activeBubbles;
+    }
+
+    public Array<Pea> getActivePeas() {
+        return activePeas;
     }
 
     public void updateParticles(float delta) {
