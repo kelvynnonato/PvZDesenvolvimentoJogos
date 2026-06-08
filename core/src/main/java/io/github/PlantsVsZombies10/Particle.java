@@ -1,5 +1,6 @@
 package io.github.PlantsVsZombies10;
 
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.utils.Pool;
 
 public class Particle implements Pool.Poolable {
@@ -8,17 +9,19 @@ public class Particle implements Pool.Poolable {
     public float alpha;
     public float size;
     public boolean alive;
+    public Color cor;
 
     private static final float LIFETIME = 0.6f;
     private float timer = 0f;
 
-    public void init(float x, float y) {
+    public void init(float x, float y, Color cor) {
         this.x = x;
         this.y = y;
         this.alpha = 1f;
         this.size = (float)(Math.random() * 8 + 4);
         this.alive = true;
         this.timer = 0f;
+        this.cor = cor.cpy();
 
         float angle = (float)(Math.random() * Math.PI * 2);
         float speed = (float)(Math.random() * 150 + 50);
@@ -44,6 +47,7 @@ public class Particle implements Pool.Poolable {
     public void reset() {
         x = y = velX = velY = alpha = size = timer = 0f;
         alive = false;
+        cor = null;
     }
 }
 

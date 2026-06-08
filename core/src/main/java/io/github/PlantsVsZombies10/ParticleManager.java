@@ -18,10 +18,10 @@ public class ParticleManager {
         shapeRenderer = new ShapeRenderer();
     }
 
-    public void spawn(float x, float y, int quantidade) {
+    public void spawn(float x, float y, int quantidade, Color cor) {
         for (int i = 0; i < quantidade; i++) {
             Particle p = particlePool.obtain();
-            p.init(x, y);
+            p.init(x, y, cor);
             activeParticles.add(p);
         }
     }
@@ -43,7 +43,7 @@ public class ParticleManager {
         shapeRenderer.setProjectionMatrix(cam.combined);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         for (Particle p : activeParticles) {
-            shapeRenderer.setColor(new Color(0.9f, 0.3f, 0.3f, p.alpha));
+            shapeRenderer.setColor(p.cor.r, p.cor.g, p.cor.b, p.alpha);
             shapeRenderer.circle(p.x, p.y, p.size);
         }
         shapeRenderer.end();

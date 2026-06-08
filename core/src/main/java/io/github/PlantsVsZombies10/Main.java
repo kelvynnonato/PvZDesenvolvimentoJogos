@@ -27,7 +27,6 @@ public class Main extends ApplicationAdapter {
     private ShapeRenderer shapeRenderer;
 
     private Plant peashooter;
-    private Texture peaShooted;
 
     private LoadingScreen loadingScreen;
     private boolean loading = true;
@@ -139,7 +138,7 @@ public class Main extends ApplicationAdapter {
         spawnTimer += delta;
         if(spawnTimer >= spawnIntervalo){
             spawnTimer = -2f;
-            world.spawnZombie(assetManager);
+            world.spawnZombie();
             switch(MathUtils.random(5)){
                 case 0: zombie1.play(); break;
                 case 1: zombie2.play(); break;
@@ -173,7 +172,7 @@ public class Main extends ApplicationAdapter {
         peashooter.render(batch, XStep, YStep);
 
         for (Pea p : world.getActivePeas()) {
-            p.render(batch, peaShooted, 0.15f);
+            p.render(batch, 0.15f);
         }
         for (Zombie z : world.getActiveZombies()) {
             z.render(batch, 1f);
@@ -260,6 +259,7 @@ public class Main extends ApplicationAdapter {
 
         batch = new SpriteBatch();
         world = new World();
+        world.setAssetManager(assetManager);
         Gdx.input.setInputProcessor(new GameInputProcessor(this));
         shapeRenderer = new ShapeRenderer();
 
@@ -267,7 +267,6 @@ public class Main extends ApplicationAdapter {
             assetManager.get("Plants/peashooter.png", Texture.class),
             0.2f
         );
-        peaShooted = assetManager.get("Bullets/pea-shooted.png", Texture.class);
 
         Texture[] bgs = {
             assetManager.get("Backgrounds/Background_Noite.jpg", Texture.class),

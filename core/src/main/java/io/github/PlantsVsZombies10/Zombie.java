@@ -127,7 +127,7 @@ public class Zombie implements Pool.Poolable{
      * Método chamado em cada frame (no método render)
      que atualiza a posição da bala.
      */
-    public void update (float delta, float brainX, float brainY, float brainW, float brainH) {
+    public void update (float delta) {
         // se estiver fora da tela então para de atualizar
 
         animTimer += delta;
@@ -142,10 +142,6 @@ public class Zombie implements Pool.Poolable{
             }
         }
 
-        float brainCenterX = brainX + brainW / 2f;
-        float brainCenterY = brainY + brainH / 2f;
-        float radius = Math.min(brainW, brainH) / 2f;
-
         float scale = 1.5f;
         float cabecaW = 53 * scale;
         float cabecaH = 48 * scale;
@@ -156,16 +152,8 @@ public class Zombie implements Pool.Poolable{
         float bocaH = 15 * scale;
         float bocaX = position.x + (cabecaW - bocaW) / 2f;
         float bocaY = position.y + 20f + bocaOffsetY * scale;
-
-        boolean colisaoCabeca = CollidingWithBrainCircle(cabecaX, cabecaY, cabecaW, cabecaH, brainCenterX, brainCenterY, radius);
-        boolean colisaoBoca   = CollidingWithBrainCircle(bocaX, bocaY, bocaW, bocaH, brainCenterX, brainCenterY, radius);
-
         if (isOutOfScreen()) {
             alive = false;
-        } else if (colisaoCabeca || colisaoBoca) {
-            alive = false;
-            comeuCerebro = true;
-            brainEatenSound.play(0.5f);
         } else {
             //posicao da bala
             position.add(speed.x * delta, speed.y * delta);
@@ -233,6 +221,9 @@ public class Zombie implements Pool.Poolable{
 
     public float getBocaY(float scale) {
         return position.y + 20f + bocaOffsetY * scale;
+    }
+    public float getBocaOffsetY(float scale) {
+        return bocaOffsetY * scale;
     }
 
     public float getBocaW(float scale) { return 32 * scale; }
