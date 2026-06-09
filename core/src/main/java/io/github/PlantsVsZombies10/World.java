@@ -1,6 +1,7 @@
 package io.github.PlantsVsZombies10;
 
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Pool;
@@ -48,10 +49,13 @@ public class World {
         return activeZombies;
     }
 
+    private Sound mordida;
+
     private AssetManager assetManager;
 
     public void setAssetManager(AssetManager assetManager) {
         this.assetManager = assetManager;
+        mordida = assetManager.get("sounds/affects/SFX chompsoft.ogg", Sound.class);
     }
 
     public void spawnZombie() {
@@ -125,6 +129,7 @@ public class World {
                     new com.badlogic.gdx.graphics.Color(0.2f, 0.8f, 0.2f, 1f));
                 activeZombies.removeIndex(i);
                 zombiePool.free(zombie);
+                mordida.play();
             }
         }
 

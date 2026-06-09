@@ -83,6 +83,7 @@ public class Main extends ApplicationAdapter {
         menu.play();
 
         assetManager.load("sounds/affects/SFX chompsoft.ogg", Sound.class);
+        assetManager.load("sounds/affects/firepea.ogg", Sound.class);
 
         assetManager.load("sounds/affects/Voices groan.ogg", Sound.class);
         assetManager.load("sounds/affects/Voices groan2.ogg", Sound.class);

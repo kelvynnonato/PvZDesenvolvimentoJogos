@@ -2,6 +2,7 @@ package io.github.PlantsVsZombies10;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
@@ -17,6 +18,7 @@ public class Pea implements Pool.Poolable {
     private static Texture firePea;
     private static String FIRE_PEA_PATH = "Bullets/pea-shooted.png";
     private AssetManager assetManager;
+    private Sound shoot;
     boolean ervilhasMontada = false;
 
 
@@ -34,7 +36,9 @@ public class Pea implements Pool.Poolable {
             pea = assetManager.get(PEA_PATH, Texture.class);
             icePea = assetManager.get(ICE_PEA_PATH, Texture.class);
             firePea = assetManager.get(FIRE_PEA_PATH, Texture.class);
+            shoot = assetManager.get("sounds/affects/firepea.ogg", Sound.class);
         }
+        shoot.play();
     }
 
     @Override
