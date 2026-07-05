@@ -13,6 +13,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.TimeUtils;
 
@@ -26,22 +27,11 @@ public class Main extends ApplicationAdapter {
     private BackgroundManager backgroundManager;
     private ShapeRenderer shapeRenderer;
 
-    private Plant peashooter;
-
     private LoadingScreen loadingScreen;
     private boolean loading = true;
     private float loadingTime = 0.0f, loadingMin = 3.0f;
 
-    private float X = 0, XStep = 0, Xmin = 0, Xmax = 0;
-    private float Y = 0, YStep = 0, Ymin = 0, Ymax = 0;
-
-    enum EstadoClick { PARADO, NORMAL, RAPIDO }
-    EstadoClick estado = EstadoClick.PARADO;
-    long UltimoClick = 0;
-    float intervalo = 0.2f;
-
     private World world;
-    private Texture zombieTexture;
     private float spawnTimer = 0f;
     private float spawnIntervalo = 0.5f;
 
@@ -49,7 +39,6 @@ public class Main extends ApplicationAdapter {
     private Sound zombie1, zombie2, zombie3, zombie4, zombie5, zombie6;
 
     private OrthographicCamera cam;
-    private boolean cameraFollowBrain = true;
 
     private FrontyardGrid frontyardGrid;
     private static final int   GRID_COLS    = 9;
@@ -61,6 +50,10 @@ public class Main extends ApplicationAdapter {
 
     private GridDebugRenderer gridDebugRenderer;
     private boolean modoDebug = false;
+
+    private PlantManager plantManager;
+    private SeedBar seedBar;
+    private Sun sun;
 
     @Override
     public void create() {
@@ -92,6 +85,12 @@ public class Main extends ApplicationAdapter {
         assetManager.load("sounds/affects/Voices groan5.ogg", Sound.class);
         assetManager.load("sounds/affects/Voices groan6.ogg", Sound.class);
 
+        assetManager.load("sounds/affects/buzzer.ogg", Sound.class);
+
+        assetManager.load("sounds/affects/plant.ogg", Sound.class);
+
+        assetManager.load("sounds/affects/readysetplant.ogg", Sound.class);
+
         loadingScreen = new LoadingScreen(assetManager, loadingMin);
 
         float w = Gdx.graphics.getWidth(), h = Gdx.graphics.getHeight();
@@ -119,22 +118,13 @@ public class Main extends ApplicationAdapter {
 
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
 
-        Xmax = Gdx.graphics.getWidth() - peashooter.getWidth();
-        Ymax = Gdx.graphics.getHeight() - peashooter.getHeight();
+        seedBar.update(delta);
 
-        float speed = 0;
-        switch (estado){
-            case PARADO: speed = 0.0f; break;
-            case NORMAL: speed = 3.0f; break;
-            case RAPIDO: speed = 7.0f; break;
+        // Plantas atiram
+        Array<float[]> shots = plantManager.update(delta);
+        for (float[] shot : shots) {
+            world.spawnPea(shot[0], shot[1]);
         }
-
-        speed = speed * Gdx.graphics.getDeltaTime();
-        XStep = lerp(XStep, X, speed);
-        YStep = lerp(YStep, Y, speed);
-
-        XStep = clamp(XStep, Xmin, Xmax);
-        YStep = clamp(YStep, Ymin, Ymax);
 
         spawnTimer += delta;
         if(spawnTimer >= spawnIntervalo){
@@ -151,27 +141,16 @@ public class Main extends ApplicationAdapter {
         }
 
         backgroundManager.update(delta);
-        world.update(delta, XStep, YStep, peashooter.getWidth(), peashooter.getHeight());
+        world.update(delta, 0, 0, 0, 0);
 
-        if (cameraFollowBrain) {
-            cam.position.set(XStep + peashooter.getWidth()/2f, YStep + peashooter.getHeight()/2f, 0);
-
-            float halfW = (cam.viewportWidth * cam.zoom)/2f;
-            float halfH = (cam.viewportHeight * cam.zoom)/2f;
-
-            cam.position.x = clamp(cam.position.x, halfW, Gdx.graphics.getWidth() - halfW);
-            cam.position.y = clamp(cam.position.y, halfH, Gdx.graphics.getHeight() - halfH);
-        } else {
-            cam.position.set(Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f, 0);
-        }
+        cam.position.set(Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f, 0);
+        cam.zoom = 1f;
         cam.update();
 
         batch.begin();
         batch.setProjectionMatrix(cam.combined);
         backgroundManager.render(batch);
-
-        peashooter.render(batch, XStep, YStep);
-
+        plantManager.render(batch);
         for (Pea p : world.getActivePeas()) {
             p.render(batch, 0.15f);
         }
@@ -186,31 +165,20 @@ public class Main extends ApplicationAdapter {
         world.updateParticles(delta);
         world.renderParticles(cam);
 
+        seedBar.render(batch, sun);
+
         if (modoDebug) {
             shapeRenderer.setProjectionMatrix(cam.combined);
             shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
 
             float scale = 1f;
-            float cabecaW = 53 * scale;
-            float cabecaH = 48 * scale;
 
             for (Zombie z : world.getActiveZombies()) {
                 // hitbox da cabeça
                 shapeRenderer.setColor(Color.RED);
                 shapeRenderer.rect(z.position.x, z.position.y + 20f, 53 * scale, 48 * scale);
-
-                // hitbox da boca (sobe e desce)
-                shapeRenderer.setColor(Color.RED);
                 shapeRenderer.rect(z.getBocaX(scale), z.getBocaY(scale), z.getBocaW(scale), z.getBocaH(scale));
             }
-
-            // hitbox circular do cérebro
-            shapeRenderer.setColor(Color.GREEN);
-            float cx = XStep + peashooter.getWidth() / 2f;
-            float cy = YStep + peashooter.getHeight() / 2f;
-            float r  = Math.min(peashooter.getWidth(), peashooter.getHeight()) / 2f;
-            shapeRenderer.circle(cx, cy, r);
-
             shapeRenderer.end();
             gridDebugRenderer.render(cam,frontyardGrid);
         }
@@ -223,35 +191,37 @@ public class Main extends ApplicationAdapter {
         }
         assetManager.dispose();
         world.dispose();
+        seedBar.dispose();
     }
 
     public void onTouch(int screenX, int screenY) {
         if (loading) return;
 
+        int slotClicked = seedBar.touchDown(screenX, screenY, sun);
+
+        if(!seedBar.hasSelection()) return;
+
         Vector3 worldCoords = new Vector3(screenX, screenY, 0);
         cam.unproject(worldCoords);
 
-        Vector2 snapped = frontyardGrid.snap(worldCoords.x, worldCoords.y);
+        int[] col = new int[1];
+        int[] row = new int[1];
+        if(!frontyardGrid.worldToTile(worldCoords.x, worldCoords.y, col, row)) return;
 
-        if(snapped == null) return;
+        if(plantManager.isTileOccupied(col[0], row[0])) return;
 
-        X = snapped.x + (frontyardGrid.getTileW()  - peashooter.getWidth())  / 2f;
-        X = clamp(X, Xmin, Xmax);
-        Y = snapped.y + (frontyardGrid.getTileH() - peashooter.getHeight()) / 2f;
-        Y = clamp(Y, Ymin, Ymax);
-
-        long agora = TimeUtils.millis();
-        float dif = (agora - UltimoClick) / 1000f;
-
-        if (dif < intervalo) {
-            estado = (estado == EstadoClick.RAPIDO) ? EstadoClick.PARADO : EstadoClick.RAPIDO;
-        } else {
-            if (estado == EstadoClick.PARADO) estado = EstadoClick.NORMAL;
-            else if (estado == EstadoClick.RAPIDO) estado = EstadoClick.PARADO;
-            else estado = EstadoClick.NORMAL;
+        SeedSlot slot = seedBar.getSlot(seedBar.getSelectedSlot());
+        if(slot == null) return;
+        else if(!slot.isReady()){
+            //fazer tocar som no futuro
         }
+        if(!sun.canAfford(slot.cost)) return;
 
-        UltimoClick = agora;
+        boolean planted = plantManager.plantar(col[0], row[0], slot);
+        if(planted){
+            sun.spend(slot.cost);
+            seedBar.onPlanted();
+        }
     }
 
     private void onAssetsLoaded(){
@@ -264,18 +234,11 @@ public class Main extends ApplicationAdapter {
         Gdx.input.setInputProcessor(new GameInputProcessor(this));
         shapeRenderer = new ShapeRenderer();
 
-        peashooter = new Plant(
-            assetManager.get("Plants/peashooter.png", Texture.class),
-            0.2f
-        );
-
         Texture[] bgs = {
             assetManager.get("Backgrounds/Background_Noite.jpg", Texture.class),
             assetManager.get("Backgrounds/Background.jpg", Texture.class)
         };
         backgroundManager = new BackgroundManager(bgs, 10f, -200, 5f, assetManager);
-
-        zombieTexture = assetManager.get("Zombies/zumbi_125_200.png", Texture.class);
 
         zombie1 = assetManager.get("sounds/affects/Voices groan.ogg", Sound.class);
         zombie2 = assetManager.get("sounds/affects/Voices groan2.ogg", Sound.class);
@@ -286,22 +249,20 @@ public class Main extends ApplicationAdapter {
 
         frontyardGrid = new FrontyardGrid(GRID_COLS, GRID_ROWS, GRID_TILE_W, GRID_TILE_H, GRID_OFFSET_X, GRID_OFFSET_Y);
         gridDebugRenderer = new GridDebugRenderer();
-
-        Vector2 firstTile = frontyardGrid.tileBottomLeft(0, 0);
-        X = firstTile.x + (frontyardGrid.getTileW() - peashooter.getWidth()) / 2f;
-        Y = firstTile.y + (frontyardGrid.getTileH() - peashooter.getHeight()) / 2f;
-        XStep = X;
-        YStep = Y;
         world.setGrid(frontyardGrid);
+
+        // Aqui para mudar quanto sois voce começa
+        sun = new Sun(150);
+        plantManager = new PlantManager(frontyardGrid, assetManager);
+        plantManager.setTextures(assetManager.get("Plants/peashooter.png", Texture.class));
+        world.setPlantManager(plantManager);
+
+        seedBar = new SeedBar(assetManager);
+        seedBar.setSlotTexture(0, assetManager.get("Plants/peashooter.png", Texture.class));
     }
 
     public void setCameraMode(boolean followBrain) {
-        cameraFollowBrain = followBrain;
-        if(followBrain){
-            cam.zoom = 0.5f;
-        } else {
             cam.zoom = 1f;
-        }
     }
 
     public void toggleDebug(){

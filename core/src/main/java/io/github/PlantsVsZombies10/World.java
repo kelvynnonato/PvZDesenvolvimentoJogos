@@ -15,6 +15,7 @@ public class World {
     private final Pool<Zombie> zombiePool = new Pool<Zombie>() {
         @Override
         protected Zombie newObject() {
+
             return new Zombie();
         }
     };
@@ -27,7 +28,6 @@ public class World {
         }
     };
 
-    private float shootTimer = 0f;
     public boolean justShot = false;
     final Array<Pea> activePeas = new Array<Pea>();
     private final Pool<Pea> peaPool = new Pool<Pea>() {
@@ -38,24 +38,32 @@ public class World {
     };
 
     private FrontyardGrid frontyardGrid;
-
+    private PlantManager plantManager;
     private final ParticleManager particleManager = new ParticleManager();
+    private Sound mordida;
+    private AssetManager assetManager;
 
     public void setGrid(FrontyardGrid frontyardGrid){
         this.frontyardGrid = frontyardGrid;
     }
 
-    public Array<Zombie> getActiveZombies() {
-        return activeZombies;
+    public void setPlantManager(PlantManager plantManager){
+        this.plantManager = plantManager;
     }
-
-    private Sound mordida;
-
-    private AssetManager assetManager;
 
     public void setAssetManager(AssetManager assetManager) {
         this.assetManager = assetManager;
         mordida = assetManager.get("sounds/affects/SFX chompsoft.ogg", Sound.class);
+    }
+
+    public Array<Zombie> getActiveZombies() {
+        return activeZombies;
+    }
+    public Array<SpeechBubble> getActiveBubbles() {
+        return activeBubbles;
+    }
+    public Array<Pea> getActivePeas() {
+        return activePeas;
     }
 
     public void spawnZombie() {
@@ -79,86 +87,104 @@ public class World {
         activeBubbles.add(bubble);
     }
 
-    private void spawnPea(float x, float y) {
+    public void spawnPea(float x, float y) {
         Pea pea = peaPool.obtain();
         pea.init(x, y, assetManager);
         activePeas.add(pea);
     }
 
-    public void update(float delta, float peashooterX, float peashooterY, float peashooterW, float peashooterH) {
-        float peashooterCenterX = peashooterX + peashooterW/2f;
-        float peashooterCenterY = peashooterY + peashooterH/2f;
-        float peashooterRadius = Math.min(peashooterW, peashooterH)/2f;
+    public void update(float delta, float peashooterX, float peashooterY,
+                       float peashooterW, float peashooterH) {
 
-        float scale = 1f;
+        float scale   = 1f;
         float cabecaW = 53 * scale;
         float cabecaH = 48 * scale;
-        float bocaW = 32 * scale;
-        float bocaH = 15 * scale;
+        float bocaW   = 32 * scale;
+        float bocaH   = 15 * scale;
 
-        //timer da ervilha
-        shootTimer += delta;
-        justShot = false;
-        if(shootTimer >= 0.6f){
-            shootTimer -= 0.6f;
-            spawnPea(peashooterX + peashooterW, peashooterY + peashooterH / 2f + 10f);
-            justShot = true;
-        }
-
+        // Zumbis
         for (int i = activeZombies.size - 1; i >= 0; i--) {
             Zombie zombie = activeZombies.get(i);
             zombie.update(delta);
-
             if (!zombie.alive) {
                 activeZombies.removeIndex(i);
                 zombiePool.free(zombie);
+                continue;
             }
 
-            float cabecaX = zombie.position.x;
-            float cabecaY = zombie.position.y + 20f;
-            float bocaX = zombie.position.x + (cabecaW - bocaW) / 2f;
-            float bocaY = zombie.getBocaOffsetY(scale);
+            // Colisão zumbi vs plantas
+            boolean colidiu = false;
+            if (plantManager != null) {
+                for (Plant plant : plantManager.getAllPlants()) {
+                    float plantCX = plant.x + plant.getWidth()  / 2f;
+                    float plantCY = plant.y + plant.getHeight() / 2f;
+                    float plantR  = Math.max(plant.getWidth(), plant.getHeight()) / 2f;
 
-            boolean acertouPeashooter = intersectaCirculo(cabecaX, cabecaY, cabecaW, cabecaH, peashooterCenterX, peashooterCenterY, peashooterRadius) ||
-                intersectaCirculo(bocaX, bocaY, bocaW, bocaH, peashooterCenterX, peashooterCenterY, peashooterRadius);
+                    float cabecaX = zombie.position.x;
+                    float cabecaY = zombie.position.y + 20f;
+                    float bocaX   = zombie.position.x + (cabecaW - bocaW) / 2f;
+                    float bocaY   = zombie.getBocaY(scale);
+                    float nextX   = zombie.position.x + zombie.speed.x * delta;
 
-            if (acertouPeashooter) {
-                zombie.alive = false;
-                zombie.comeuCerebro = true;
-                particleManager.spawn(zombie.position.x + 40f, zombie.position.y + 48f, 12,
-                    new com.badlogic.gdx.graphics.Color(0.2f, 0.8f, 0.2f, 1f));
-                activeZombies.removeIndex(i);
-                zombiePool.free(zombie);
-                mordida.play();
+                    boolean acertou =
+                        intersectaCirculo(cabecaX, cabecaY, cabecaW, cabecaH, plantCX, plantCY, plantR) ||
+                            intersectaCirculo(bocaX,   bocaY,   bocaW,   bocaH,   plantCX, plantCY, plantR) ||
+                            intersectaCirculo(nextX,   cabecaY, cabecaW, cabecaH, plantCX, plantCY, plantR);
+
+                    if (acertou) {
+                        colidiu = true;
+                        zombie.speed.set(0, 0);
+
+                        zombie.danoTimer += delta;
+                        if (zombie.danoTimer >= 0.5f) {
+                            zombie.danoTimer = 0f;
+                            plant.hp -= 34;
+                            mordida.play();
+                            particleManager.spawn(plantCX, plantCY, 6,
+                                new com.badlogic.gdx.graphics.Color(0.8f, 0.2f, 0.2f, 1f));
+                        }
+                        break;
+                    }
+                }
+            }
+
+            if (!colidiu) {
+                zombie.danoTimer = 0f;
+                if (zombie.speed.isZero()) {
+                    zombie.speed.set(-300f, 0);
+                }
             }
         }
 
-        for(int i = activePeas.size - 1; i >= 0; i--) {
+        // Ervilhas vs Zumbis
+        for (int i = activePeas.size - 1; i >= 0; i--) {
             Pea pea = activePeas.get(i);
             pea.update(delta);
+
             if (!pea.alive) {
                 activePeas.removeIndex(i);
                 peaPool.free(pea);
+                continue;
             }
 
             float peaCX = pea.getCenterX(0.15f);
             float peaCY = pea.getCenterY(0.15f);
-            float peaR = pea.getRadius(0.15f);
+            float peaR  = pea.getRadius(0.15f);
 
             for (int j = activeZombies.size - 1; j >= 0; j--) {
                 Zombie zombie = activeZombies.get(j);
 
                 float cabecaX = zombie.position.x;
                 float cabecaY = zombie.position.y + 20f;
-                float bocaX = zombie.position.x + (cabecaW - bocaW) / 2f;
-                float bocaY = zombie.getBocaY(scale);
+                float bocaX   = zombie.position.x + (cabecaW - bocaW) / 2f;
+                float bocaY   = zombie.getBocaY(scale);
 
                 boolean acertou =
                     intersectaCirculo(cabecaX, cabecaY, cabecaW, cabecaH, peaCX, peaCY, peaR) ||
-                        intersectaCirculo(bocaX, bocaY, bocaW, bocaH, peaCX, peaCY, peaR);
+                        intersectaCirculo(bocaX,   bocaY,   bocaW,   bocaH,   peaCX, peaCY, peaR);
 
-                if(acertou){
-                    pea.alive = false;
+                if (acertou) {
+                    pea.alive    = false;
                     zombie.alive = false;
                     particleManager.spawn(peaCX, peaCY, 10,
                         new com.badlogic.gdx.graphics.Color(0.2f, 0.8f, 0.2f, 1f));
@@ -171,6 +197,7 @@ public class World {
             }
         }
 
+        // Balões
         for (int i = activeBubbles.size - 1; i >= 0; i--) {
             SpeechBubble bubble = activeBubbles.get(i);
             bubble.update(delta);
@@ -179,14 +206,6 @@ public class World {
                 bubblePool.free(bubble);
             }
         }
-    }
-
-    public Array<SpeechBubble> getActiveBubbles() {
-        return activeBubbles;
-    }
-
-    public Array<Pea> getActivePeas() {
-        return activePeas;
     }
 
     public void updateParticles(float delta) {

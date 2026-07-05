@@ -62,6 +62,8 @@ public class Zombie implements Pool.Poolable{
 
     private static final float SPEED = 300f;
 
+    public float danoTimer = 0f;
+
     public Zombie() {
         this.position = new Vector2();
         this.speed = new Vector2();
@@ -122,6 +124,7 @@ public class Zombie implements Pool.Poolable{
         speed.set(0,0);
         alive = false;
         comeuCerebro = false;
+        danoTimer -= danoTimer;
     }
     /**
      * Método chamado em cada frame (no método render)
