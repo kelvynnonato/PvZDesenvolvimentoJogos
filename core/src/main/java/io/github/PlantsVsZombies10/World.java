@@ -41,7 +41,7 @@ public class World {
     private PlantManager plantManager;
     private final ParticleManager particleManager = new ParticleManager();
     private final SunDropManager sunDropManager = new SunDropManager();
-    private Sound mordida;
+    private Sound mordida, morteZumbi;
     private AssetManager assetManager;
 
     private boolean zombieReachedHouse = false;
@@ -61,6 +61,7 @@ public class World {
         this.assetManager = assetManager;
         mordida = assetManager.get("sounds/affects/SFX chompsoft.ogg", Sound.class);
         sunDropManager.setAssetManager(assetManager);
+        morteZumbi = assetManager.get("sounds/affects/splat.ogg", Sound.class);
     }
 
     public Array<Zombie> getActiveZombies() {
@@ -223,6 +224,7 @@ public class World {
                         intersectaCirculo(bocaX,   bocaY,   bocaW,   bocaH,   peaCX, peaCY, peaR);
 
                 if (acertou) {
+                    morteZumbi.play();
                     pea.alive    = false;
                     zombie.alive = false;
                     particleManager.spawn(peaCX, peaCY, 10,
