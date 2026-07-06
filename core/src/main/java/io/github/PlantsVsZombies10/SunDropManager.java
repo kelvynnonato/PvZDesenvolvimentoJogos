@@ -1,6 +1,7 @@
 package io.github.PlantsVsZombies10;
 
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -18,6 +19,7 @@ public class SunDropManager {
 
     private final SpriteBatch batch = new SpriteBatch();
     private Texture sunTexture;
+    private Sound sunColect;
 
     // Distância que o sol cai a partir de onde nasceu, até "pousar"
     private static final float QUEDA_ALTURA = 45f;
@@ -28,6 +30,7 @@ public class SunDropManager {
 
     public void setAssetManager(AssetManager assetManager) {
         sunTexture = assetManager.get("Bullets/sun PVZ.png", Texture.class);
+        sunColect = assetManager.get("sounds/affects/points.ogg", Sound.class);
     }
 
     public void spawn(float x, float y, int sunAmount) {
@@ -60,6 +63,7 @@ public class SunDropManager {
             if (sun.isCollectable() && sun.isHit(worldX, worldY)) {
                 int amount = sun.sunAmount;
                 sun.collect();
+                sunColect.play();
                 return amount;
             }
         }

@@ -165,7 +165,7 @@ public class World {
                             plant.hp -= 34;
                             mordida.play();
                             particleManager.spawn(plantCX, plantCY, 6,
-                                new com.badlogic.gdx.graphics.Color(0.8f, 0.2f, 0.2f, 1f));
+                                new com.badlogic.gdx.graphics.Color(0.2f, 0.8f, 0.2f, 1f));
                         }
                         break;
                     }
@@ -212,6 +212,8 @@ public class World {
                     zombie.alive = false;
                     particleManager.spawn(peaCX, peaCY, 10,
                         new com.badlogic.gdx.graphics.Color(0.2f, 0.8f, 0.2f, 1f));
+                    particleManager.spawn(peaCX, peaCY, 6,
+                        new com.badlogic.gdx.graphics.Color(0.8f, 0.2f, 0.2f, 1f));
                     activePeas.removeIndex(i);
                     peaPool.free(pea);
                     activeZombies.removeIndex(j);

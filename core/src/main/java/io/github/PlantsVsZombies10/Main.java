@@ -89,6 +89,7 @@ public class Main extends ApplicationAdapter {
         assetManager.load("sounds/affects/Voices groan6.ogg", Sound.class);
 
         assetManager.load("sounds/affects/buzzer.ogg", Sound.class);
+        assetManager.load("sounds/affects/points.ogg", Sound.class);
 
         assetManager.load("sounds/affects/plant.ogg", Sound.class);
 
