@@ -160,7 +160,7 @@ public class Main extends ApplicationAdapter {
             if (isDay) {
                 skySunTimer += delta;
                 if (skySunTimer >= skySunNextInterval) {
-                    skySunTimer = 0f;
+                    skySunTimer -= skySunNextInterval;
                     skySunNextInterval = MathUtils.random(15f, 20f);
                     spawnSkySun();
                 }
@@ -206,6 +206,7 @@ public class Main extends ApplicationAdapter {
             // Se já for Game Over, apenas atualiza o temporizador de reinício
             gameOverTimer += delta;
             if(gameOverTimer >= GAME_OVER_DURATION){
+                gameOverTimer -= GAME_OVER_DURATION;
                 resetGame();
                 return; // Sai para evitar desenhar frame quebrado no reset
             }

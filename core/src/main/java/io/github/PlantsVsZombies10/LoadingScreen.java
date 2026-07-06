@@ -16,7 +16,7 @@ public class LoadingScreen {
     private final SpriteBatch batch;
     private final Texture background, logo, grama, terra, rolo;
 
-    // timer interto para rotação do rolo - nunca zera, apenas acumula
+    // timer interno para rotação do rolo - nunca zera, apenas acumula
     private float roloAngle = 0.0f;
     private final float roloSpeed = 200f; // graus por segundo
 

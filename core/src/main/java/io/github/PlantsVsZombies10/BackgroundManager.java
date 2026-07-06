@@ -51,7 +51,7 @@ public class BackgroundManager {
 
         if (bgTimer >= bgInterval && !fading) {
             fading = true;
-            bgTimer =- bgTimer;
+            bgTimer =- bgInterval;
             bgAlpha = 1f;
             musicSwitched = false; // reseta o flag ao iniciar o fade
         }

@@ -62,6 +62,7 @@ public class SunDrop implements Pool.Poolable {
             case IDLE:
                 idleTimer += delta;
                 if (idleTimer >= IDLE_DURATION) {
+                    idleTimer -= IDLE_DURATION;
                     alive = false; // ninguém clicou a tempo
                 }
                 break;

@@ -78,6 +78,7 @@ public class SpeechBubble {
 
         timer += delta;
         if (timer >= DURATION) {
+            timer -= DURATION;
             alive = false;
         }
     }

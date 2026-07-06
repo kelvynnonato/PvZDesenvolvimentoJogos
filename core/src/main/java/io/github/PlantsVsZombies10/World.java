@@ -176,7 +176,7 @@ public class World {
 
                         zombie.danoTimer += delta;
                         if (zombie.danoTimer >= 0.5f) {
-                            zombie.danoTimer -= zombie.danoTimer;
+                            zombie.danoTimer -= 0.5f;
                             plant.hp -= 34;
                             mordida.play();
                             particleManager.spawn(plantCX, plantCY, 6,

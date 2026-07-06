@@ -90,7 +90,7 @@ public class Zombie implements Pool.Poolable{
 
         animTimer += delta;
         if (animTimer >= animIntervalo) {
-            animTimer -= animTimer;
+            animTimer -= animIntervalo;
             animPhase = !animPhase;
 
             if (!comendo) {
