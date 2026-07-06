@@ -4,14 +4,16 @@ public class SeedSlot {
     public final String name;
     public final int cost;
     public final float cooldown;
+    public final Plant.PlantType type;
 
     private float cooldownTimer = 0f;
     private boolean onCooldown = false;
 
-    public SeedSlot(String name, int cost, float cooldown) {
+    public SeedSlot(String name, int cost, float cooldown, Plant.PlantType type) {
         this.name = name;
         this.cost = cost;
         this.cooldown = cooldown;
+        this.type = type;
     }
 
     public void update(float delta){

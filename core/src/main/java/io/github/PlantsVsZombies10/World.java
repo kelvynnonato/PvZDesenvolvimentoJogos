@@ -40,6 +40,7 @@ public class World {
     private FrontyardGrid frontyardGrid;
     private PlantManager plantManager;
     private final ParticleManager particleManager = new ParticleManager();
+    private final SunDropManager sunDropManager = new SunDropManager();
     private Sound mordida;
     private AssetManager assetManager;
 
@@ -91,6 +92,28 @@ public class World {
         Pea pea = peaPool.obtain();
         pea.init(x, y, assetManager);
         activePeas.add(pea);
+    }
+
+    // Chamado quando um girassol termina o ciclo de produção - cria o sol visual e clicável
+    public void spawnSunDrop(float x, float y, int sunAmount) {
+        sunDropManager.spawn(x, y, sunAmount);
+    }
+
+    public void updateSunDrops(float delta) {
+        sunDropManager.update(delta);
+    }
+
+    public void renderSunDrops(OrthographicCamera cam) {
+        sunDropManager.render(cam);
+    }
+
+    public boolean trySunClick(float worldX, float worldY, Sun sun) {
+        int coletado = sunDropManager.tryCollect(worldX, worldY);
+        if (coletado <= 0) return false;
+
+        sun.add(coletado);
+        particleManager.spawn(worldX, worldY, 8, new com.badlogic.gdx.graphics.Color(1f, 0.85f, 0.2f, 1f));
+        return true;
     }
 
     public void update(float delta, float peashooterX, float peashooterY,
@@ -227,6 +250,7 @@ public class World {
 
     public void dispose() {
         particleManager.dispose();
+        sunDropManager.dispose();
     }
 }
 

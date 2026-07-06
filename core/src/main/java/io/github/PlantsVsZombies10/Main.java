@@ -30,10 +30,11 @@ public class Main extends ApplicationAdapter {
     private LoadingScreen loadingScreen;
     private boolean loading = true;
     private float loadingTime = 0.0f, loadingMin = 3.0f;
-
     private World world;
     private float spawnTimer = 0f;
     private float spawnIntervalo = 0.5f;
+    private float gameTime = 0f;
+    private static final float ZOMBIE_START_DELAY = 10f; // segundos antes do 1º zumbi aparecer
 
     private Music menu;
     private Sound zombie1, zombie2, zombie3, zombie4, zombie5, zombie6;
@@ -62,6 +63,7 @@ public class Main extends ApplicationAdapter {
 
         assetManager.load("Plants/peashooter.png", Texture.class);
         assetManager.load("Bullets/pea-shooted.png", Texture.class);
+        assetManager.load("Plants/sunflower.png", Texture.class);
 
         assetManager.load("Backgrounds/Background_Noite.jpg", Texture.class);
         assetManager.load("Backgrounds/Background.jpg", Texture.class);
@@ -125,18 +127,24 @@ public class Main extends ApplicationAdapter {
         for (float[] shot : shots) {
             world.spawnPea(shot[0], shot[1]);
         }
+        for (float[] sunSpawn : plantManager.getPendingSunSpawns()) {
+            world.spawnSunDrop(sunSpawn[0], sunSpawn[1], (int) sunSpawn[2]);
+        }
 
-        spawnTimer += delta;
-        if(spawnTimer >= spawnIntervalo){
-            spawnTimer = -2f;
-            world.spawnZombie();
-            switch(MathUtils.random(5)){
-                case 0: zombie1.play(); break;
-                case 1: zombie2.play(); break;
-                case 2: zombie3.play(); break;
-                case 3: zombie4.play(); break;
-                case 4: zombie5.play(); break;
-                default: zombie6.play(); break;
+        gameTime += delta;
+        if (gameTime >= ZOMBIE_START_DELAY) {
+            spawnTimer += delta;
+            if(spawnTimer >= spawnIntervalo){
+                spawnTimer = -2f;
+                world.spawnZombie();
+                switch(MathUtils.random(5)){
+                    case 0: zombie1.play(); break;
+                    case 1: zombie2.play(); break;
+                    case 2: zombie3.play(); break;
+                    case 3: zombie4.play(); break;
+                    case 4: zombie5.play(); break;
+                    default: zombie6.play(); break;
+                }
             }
         }
 
@@ -164,6 +172,9 @@ public class Main extends ApplicationAdapter {
 
         world.updateParticles(delta);
         world.renderParticles(cam);
+
+        world.updateSunDrops(delta);
+        world.renderSunDrops(cam);
 
         seedBar.render(batch, sun);
 
@@ -197,12 +208,18 @@ public class Main extends ApplicationAdapter {
     public void onTouch(int screenX, int screenY) {
         if (loading) return;
 
+        // Um único unproject, usado tanto pra coletar sol quanto pra plantar
+        Vector3 worldCoords = new Vector3(screenX, screenY, 0);
+        cam.unproject(worldCoords);
+
+        // Sol caído tem prioridade: se o clique acertou um, só coleta e não faz mais nada
+        if (world.trySunClick(worldCoords.x, worldCoords.y, sun)) {
+            return;
+        }
+
         int slotClicked = seedBar.touchDown(screenX, screenY, sun);
 
         if(!seedBar.hasSelection()) return;
-
-        Vector3 worldCoords = new Vector3(screenX, screenY, 0);
-        cam.unproject(worldCoords);
 
         int[] col = new int[1];
         int[] row = new int[1];
@@ -254,11 +271,15 @@ public class Main extends ApplicationAdapter {
         // Aqui para mudar quanto sois voce começa
         sun = new Sun(150);
         plantManager = new PlantManager(frontyardGrid, assetManager);
-        plantManager.setTextures(assetManager.get("Plants/peashooter.png", Texture.class));
+        plantManager.setTextures(
+            assetManager.get("Plants/peashooter.png", Texture.class),
+            assetManager.get("Plants/sunflower.png", Texture.class)
+        );
         world.setPlantManager(plantManager);
 
         seedBar = new SeedBar(assetManager);
         seedBar.setSlotTexture(0, assetManager.get("Plants/peashooter.png", Texture.class));
+        seedBar.setSlotTexture(1, assetManager.get("Plants/sunflower.png", Texture.class));
     }
 
     public void setCameraMode(boolean followBrain) {

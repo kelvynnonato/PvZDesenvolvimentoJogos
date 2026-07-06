@@ -14,8 +14,16 @@ public class PlantManager {
 
     private final FrontyardGrid frontyardGrid;
     private Texture peashooterTexture;
+    private Texture sunflowerTexture;
     private Sound plant;
     private AssetManager assetManager;
+
+    // Posições (x, y, quantidade) onde um sol de girassol nasceu neste frame.
+    // O World é quem efetivamente cria o SunDrop visual a partir disso.
+    private final Array<float[]> pendingSunSpawns = new Array<>();
+    private static final float SUNFLOWER_SCALE = 0.12f; // ajuste aqui o tamanho do girassol
+    private static final float SUNFLOWER_PRODUCTION_COOLDOWN = 20f; // segundos entre cada sol gerado
+    private static final int   SUNFLOWER_SUN_AMOUNT = 25;
 
     public PlantManager(FrontyardGrid grid, AssetManager assetManager) {
         this.frontyardGrid = grid;
@@ -29,26 +37,42 @@ public class PlantManager {
         }
     }
 
-    public void setTextures(Texture peashooterTexture) {
+    public void setTextures(Texture peashooterTexture, Texture sunflowerTexture) {
         this.peashooterTexture = peashooterTexture;
+        this.sunflowerTexture = sunflowerTexture;
+    }
+
+    // Fábrica de plantas - cria a instância correta de acordo com o tipo do slot
+    private Plant criarPlanta(SeedSlot slot){
+        switch (slot.type){
+            case SUNFLOWER: {
+                Plant sunflower = new Plant(sunflowerTexture, 0.12f, 300, slot.cost, 5f, Plant.PlantType.SUNFLOWER);
+                sunflower.sunAmount = 25; // quanto sol ela gera a cada ciclo
+                return sunflower;
+            }
+            case PEASHOOTER:
+            default:
+                return new Plant(peashooterTexture, 0.18f, 300, slot.cost, 1.5f, Plant.PlantType.PEASHOOTER);
+        }
     }
 
     public boolean plantar(int col, int row, SeedSlot slot){
         if(col < 0 || col >= cols || row < 0 || row >= rows){ return false;}
         if(grid[col][row] != null){ return false;} // tile ocupado
 
-        Plant peashooter = new Plant(peashooterTexture, 0.2f, 300, 100, 1.5f);
+        Plant novaPlanta = criarPlanta(slot);
+        if(novaPlanta == null) return false;
 
         //Centraliza no tile
         float tileX = frontyardGrid.getOffsetX() + col * frontyardGrid.getTileW();
         float tileY = frontyardGrid.getOffsetY() + row * frontyardGrid.getTileH();
-        peashooter.x = tileX + (frontyardGrid.getTileW()  - peashooter.getWidth())  / 2f;
-        peashooter.y = tileY + (frontyardGrid.getTileH() - peashooter.getHeight()) / 2f;
+        novaPlanta.x = tileX + (frontyardGrid.getTileW()  - novaPlanta.getWidth())  / 2f;
+        novaPlanta.y = tileY + (frontyardGrid.getTileH() - novaPlanta.getHeight()) / 2f;
 
-        peashooter.tileCol = col;
-        peashooter.tileRow = row;
+        novaPlanta.tileCol = col;
+        novaPlanta.tileRow = row;
 
-        grid[col][row] = peashooter;
+        grid[col][row] = novaPlanta;
 
         plant.play();
         return true;
@@ -58,25 +82,41 @@ public class PlantManager {
     // Retorna array com posicoes de disparos
     public Array<float[]> update(float delta){
         Array<float[]> shots = new Array<>();
+        pendingSunSpawns.clear();
 
         for(int c = 0; c < cols; c++){
             for(int r = 0; r < rows; r++){
-                Plant peashooter = grid[c][r];
+                Plant planta = grid[c][r];
 
-                if(peashooter == null) continue;
+                if(planta == null) continue;
 
-                if(!peashooter.isAlive()){
+                if(!planta.isAlive()){
                     grid[c][r] = null;
+                    continue;
                 }
 
-                boolean shoot = peashooter.update(delta);
-                if(shoot){
-                    shots.add(new float[]{peashooter.getMuzzleX(), peashooter.getMuzzleY()});
+                boolean ciclo = planta.update(delta);
+                if(!ciclo) continue;
+
+                switch (planta.type){
+                    case PEASHOOTER:
+                        shots.add(new float[]{planta.getMuzzleX(), planta.getMuzzleY()});
+                        break;
+                    case SUNFLOWER:
+                        float centerX = planta.x + planta.getWidth()  / 2f;
+                        float centerY = planta.y + planta.getHeight() / 2f;
+                        pendingSunSpawns.add(new float[]{centerX, centerY, planta.sunAmount});
+                        break;
                 }
             }
         }
 
         return shots;
+    }
+
+    // Sóis que nasceram no último update(). O chamador deve consumir isso a cada frame.
+    public Array<float[]> getPendingSunSpawns(){
+        return pendingSunSpawns;
     }
 
     public void render(SpriteBatch batch) {

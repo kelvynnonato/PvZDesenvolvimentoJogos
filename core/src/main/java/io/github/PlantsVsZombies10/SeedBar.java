@@ -40,7 +40,8 @@ public class SeedBar {
         slots = new SeedSlot[MAX_SLOTS];
         slotTextures = new Texture[MAX_SLOTS];
 
-        slots[0] = new SeedSlot("Peashooter", 100, 7.5f);
+        slots[0] = new SeedSlot("Peashooter", 100, 7.5f, Plant.PlantType.PEASHOOTER);
+        slots[1] = new SeedSlot("Sunflower", 50, 7.5f, Plant.PlantType.SUNFLOWER);
 
         if(cantBuyNow == null){
             cantBuyNow = assetManager.get("sounds/affects/buzzer.ogg", Sound.class);
