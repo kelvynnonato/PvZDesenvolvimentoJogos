@@ -8,9 +8,11 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.utils.Array;
@@ -33,6 +35,7 @@ public class Main extends ApplicationAdapter {
     private World world;
     private float spawnTimer = 0f;
     private float spawnIntervalo = 0.5f;
+    private float minSpawnIntervalo = 0.5f;
     private float gameTime = 0f;
     private static final float ZOMBIE_START_DELAY = 10f; // segundos antes do 1º zumbi aparecer
 
@@ -58,6 +61,17 @@ public class Main extends ApplicationAdapter {
 
     private float skySunTimer = 0f;
     private float skySunNextInterval = MathUtils.random(15f, 20f);
+
+    private boolean gameOver = false;
+    public float gameOverSoundTimer = 0f;
+    private float gameOverTimer = 0f;
+    private static final float GAME_OVER_DURATION = 5f;
+    private Sound zombieEatingBrain, gameOverScream;
+    private Texture ZombiesAteYourBrain;
+    private BitmapFont gameOverFont;
+
+    private Sound zombieWave;
+    private boolean firstZombie = false;
 
     @Override
     public void create() {
@@ -94,9 +108,15 @@ public class Main extends ApplicationAdapter {
         assetManager.load("sounds/affects/buzzer.ogg", Sound.class);
         assetManager.load("sounds/affects/points.ogg", Sound.class);
 
+        assetManager.load("sounds/affects/siren.ogg", Sound.class);
+        assetManager.load("sounds/affects/gulp.ogg", Sound.class);
+
         assetManager.load("sounds/affects/plant.ogg", Sound.class);
 
         assetManager.load("sounds/affects/readysetplant.ogg", Sound.class);
+
+        assetManager.load("sounds/misc/scream.ogg", Sound.class);
+        assetManager.load("GameOver/ZombiesAteYourBrain.png", Texture.class);
 
         loadingScreen = new LoadingScreen(assetManager, loadingMin);
 
@@ -122,48 +142,73 @@ public class Main extends ApplicationAdapter {
         }
 
         float delta = Gdx.graphics.getDeltaTime();
-
         ScreenUtils.clear(0.15f, 0.15f, 0.2f, 1f);
 
-        seedBar.update(delta);
+        if (!gameOver) {
+            seedBar.update(delta);
 
-        // Plantas atiram
-        boolean isDay = backgroundManager.isDay();
-        Array<float[]> shots = plantManager.update(delta, isDay);
-        for (float[] shot : shots) {
-            world.spawnPea(shot[0], shot[1]);
-        }
-        for (float[] sunSpawn : plantManager.getPendingSunSpawns()) {
-            world.spawnSunDrop(sunSpawn[0], sunSpawn[1], (int) sunSpawn[2]);
-        }
-        if (isDay) {
-            skySunTimer += delta;
-            if (skySunTimer >= skySunNextInterval) {
-                skySunTimer = 0f;
-                skySunNextInterval = MathUtils.random(15f, 20f);
-                spawnSkySun();
+            // Plantas atiram
+            boolean isDay = backgroundManager.isDay();
+            Array<float[]> shots = plantManager.update(delta, isDay);
+            for (float[] shot : shots) {
+                world.spawnPea(shot[0], shot[1]);
             }
-        }
-
-        gameTime += delta;
-        if (gameTime >= ZOMBIE_START_DELAY) {
-            spawnTimer += delta;
-            if(spawnTimer >= spawnIntervalo){
-                spawnTimer = -2f;
-                world.spawnZombie();
-                switch(MathUtils.random(5)){
-                    case 0: zombie1.play(); break;
-                    case 1: zombie2.play(); break;
-                    case 2: zombie3.play(); break;
-                    case 3: zombie4.play(); break;
-                    case 4: zombie5.play(); break;
-                    default: zombie6.play(); break;
+            for (float[] sunSpawn : plantManager.getPendingSunSpawns()) {
+                world.spawnSunDrop(sunSpawn[0], sunSpawn[1], (int) sunSpawn[2]);
+            }
+            if (isDay) {
+                skySunTimer += delta;
+                if (skySunTimer >= skySunNextInterval) {
+                    skySunTimer = 0f;
+                    skySunNextInterval = MathUtils.random(15f, 20f);
+                    spawnSkySun();
                 }
             }
-        }
 
-        backgroundManager.update(delta);
-        world.update(delta, 0, 0, 0, 0);
+            gameTime += delta;
+            if (gameTime >= ZOMBIE_START_DELAY) {
+                if(!firstZombie){
+                    firstZombie = true;
+                    zombieWave.play();
+                }
+                float ingameTime = gameTime - ZOMBIE_START_DELAY;
+                spawnIntervalo = Math.max(minSpawnIntervalo, 8f - ingameTime * (7.5f / 180f));
+
+                spawnTimer += delta;
+                if(spawnTimer >= spawnIntervalo){
+                    spawnTimer -= spawnIntervalo;
+                    world.spawnZombie();
+                    switch(MathUtils.random(5)){
+                        case 0: zombie1.play(); break;
+                        case 1: zombie2.play(); break;
+                        case 2: zombie3.play(); break;
+                        case 3: zombie4.play(); break;
+                        case 4: zombie5.play(); break;
+                        default: zombie6.play(); break;
+                    }
+                }
+            }
+
+            backgroundManager.update(delta);
+            world.update(delta, 0, 0, 0, 0);
+            world.updateParticles(delta);
+            world.updateSunDrops(delta);
+
+            // Verifica condição de Game Over
+            if(world.hasZombieReachedHouse()){
+                gameOver = true;
+                zombieEatingBrain.play();
+                zombieEatingBrain.play();
+                gameOverScream.play();
+            }
+        } else {
+            // Se já for Game Over, apenas atualiza o temporizador de reinício
+            gameOverTimer += delta;
+            if(gameOverTimer >= GAME_OVER_DURATION){
+                resetGame();
+                return; // Sai para evitar desenhar frame quebrado no reset
+            }
+        }
 
         cam.position.set(Gdx.graphics.getWidth() / 2f, Gdx.graphics.getHeight() / 2f, 0);
         cam.zoom = 1f;
@@ -184,28 +229,39 @@ public class Main extends ApplicationAdapter {
         }
         batch.end();
 
-        world.updateParticles(delta);
         world.renderParticles(cam);
-
-        world.updateSunDrops(delta);
         world.renderSunDrops(cam);
-
         seedBar.render(batch, sun);
 
         if (modoDebug) {
             shapeRenderer.setProjectionMatrix(cam.combined);
             shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
-
             float scale = 1f;
-
             for (Zombie z : world.getActiveZombies()) {
-                // hitbox da cabeça
                 shapeRenderer.setColor(Color.RED);
                 shapeRenderer.rect(z.position.x, z.position.y + 20f, 53 * scale, 48 * scale);
                 shapeRenderer.rect(z.getBocaX(scale), z.getBocaY(scale), z.getBocaW(scale), z.getBocaH(scale));
             }
             shapeRenderer.end();
-            gridDebugRenderer.render(cam,frontyardGrid);
+            gridDebugRenderer.render(cam, frontyardGrid);
+        }
+
+        if (gameOver) {
+            backgroundManager.stopBackgroundMusic();
+            Matrix4 uiMatrix = new Matrix4().setToOrtho2D(0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+            batch.setProjectionMatrix(uiMatrix);
+            batch.begin();
+
+            // Desenha a imagem centralizada na tela
+            float imgX = (Gdx.graphics.getWidth() - ZombiesAteYourBrain.getWidth()) / 2f;
+            float imgY = (Gdx.graphics.getHeight() - ZombiesAteYourBrain.getHeight()) / 2f;
+            batch.draw(ZombiesAteYourBrain, imgX, imgY);
+
+            gameOverFont.setColor(Color.WHITE);
+            gameOverFont.getData().setScale(2f); // Ajustado escala para não ficar gigante
+            gameOverFont.draw(batch, "Reiniciando...", Gdx.graphics.getWidth() / 2f - 60f, imgY - 10f);
+
+            batch.end();
         }
     }
 
@@ -243,9 +299,6 @@ public class Main extends ApplicationAdapter {
 
         SeedSlot slot = seedBar.getSlot(seedBar.getSelectedSlot());
         if(slot == null) return;
-        else if(!slot.isReady()){
-            //fazer tocar som no futuro
-        }
         if(!sun.canAfford(slot.cost)) return;
 
         boolean planted = plantManager.plantar(col[0], row[0], slot);
@@ -305,6 +358,16 @@ public class Main extends ApplicationAdapter {
         seedBar = new SeedBar(assetManager);
         seedBar.setSlotTexture(0, assetManager.get("Plants/peashooterIngame.png", Texture.class));
         seedBar.setSlotTexture(1, assetManager.get("Plants/sunflowerIngame.png", Texture.class));
+
+        zombieWave = assetManager.get("sounds/affects/siren.ogg", Sound.class);
+
+        gameOverScream = assetManager.get("sounds/misc/scream.ogg", Sound.class);
+        zombieEatingBrain = assetManager.get("sounds/affects/SFX chompsoft.ogg", Sound.class);
+        ZombiesAteYourBrain = assetManager.get("GameOver/ZombiesAteYourBrain.png", Texture.class);
+
+        gameOverFont = new BitmapFont();
+        gameOverFont.getData().setScale(4f);
+        gameOverFont.setColor(Color.RED);
     }
 
     public void setCameraMode(boolean followBrain) {
@@ -313,5 +376,28 @@ public class Main extends ApplicationAdapter {
 
     public void toggleDebug(){
         modoDebug = !modoDebug;
+    }
+
+    private void resetGame(){
+        gameOver = false;
+        gameOverTimer = 0f;
+        gameTime = 0f;
+        spawnTimer = 0f;
+
+        world.dispose();
+        world = new World();
+        world.setAssetManager(assetManager);
+        world.setGrid(frontyardGrid);
+
+        sun = new Sun(150);
+
+        plantManager = new PlantManager(frontyardGrid, assetManager);
+        plantManager.setTextures(
+            assetManager.get("Plants/peashooterIngame.png", Texture.class),
+            assetManager.get("Plants/sunflowerIngame.png", Texture.class)
+        );
+        world.setPlantManager(plantManager);
+        seedBar.clearSelection();
+        backgroundManager.startBackgroundMusic();
     }
 }

@@ -37,9 +37,9 @@ public class BackgroundManager {
             night = assetManager.get(SOUND_PATH_NIGHT, Music.class);
         }
 
-        night.setLooping(true);
-        night.setVolume(2.0f);
-        night.play();
+        day.setLooping(true);
+        day.setVolume(2.0f);
+        day.play();
     }
 
     public boolean isDay() {
@@ -104,5 +104,21 @@ public class BackgroundManager {
 
         //reseta a cor para não afetar os outros sprites
         batch.setColor(1, 1, 1, 1f);
+    }
+
+    public void stopBackgroundMusic(){
+        if(currentBackground == 1){
+            day.stop();
+        } else {
+            night.stop();
+        }
+    }
+
+    public void startBackgroundMusic(){
+        if(currentBackground == 1){
+            day.play();
+        } else {
+            night.play();
+        }
     }
 }

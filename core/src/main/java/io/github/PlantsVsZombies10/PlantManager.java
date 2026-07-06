@@ -15,7 +15,7 @@ public class PlantManager {
     private final FrontyardGrid frontyardGrid;
     private Texture peashooterTexture;
     private Texture sunflowerTexture;
-    private Sound plant;
+    private Sound plant, plantEaten;
     private AssetManager assetManager;
 
     // Posições (x, y, quantidade) onde um sol de girassol nasceu neste frame.
@@ -34,6 +34,7 @@ public class PlantManager {
 
         if(plant == null){
             plant = assetManager.get("sounds/affects/plant.ogg", Sound.class);
+            plantEaten = assetManager.get("sounds/affects/gulp.ogg", Sound.class);
         }
     }
 
@@ -91,6 +92,7 @@ public class PlantManager {
                 if(planta == null) continue;
 
                 if(!planta.isAlive()){
+                    plantEaten.play();
                     grid[c][r] = null;
                     continue;
                 }

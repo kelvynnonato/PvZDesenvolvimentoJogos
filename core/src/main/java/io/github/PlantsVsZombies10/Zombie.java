@@ -22,31 +22,10 @@ public class Zombie implements Pool.Poolable{
     private static TextureRegion bocaZumbi;
     private static TextureRegion cabeloZumbi;
 
-    private static TextureRegion corpoZumbi;
-    private static TextureRegion gravataZumbi;
-    private static TextureRegion pescocoZumbi;
-
-    private static TextureRegion bracoExtZumbi;
-    private static TextureRegion danoBracoExtZumbi;
-    private static TextureRegion antebracoExtZumbi;
-    private static TextureRegion maoExtZumbi;
-
-    private static TextureRegion bracoIntZumbi;
-    private static TextureRegion antebracoIntZumbi;
-    private static TextureRegion maoIntZumbi;
-
-    private static TextureRegion pernaExtZumbi;
-    private static TextureRegion canelaExtZumbi;
-    private static TextureRegion peExtZumbi;
-
-    private static TextureRegion pernaIntZumbi;
-    private static TextureRegion canelaIntZumbi;
-    private static TextureRegion peIntZumbi;
-
     private static final String SPRITESHEET_PATH = "Zombies/PC _ Computer - Plants vs. Zombies - Zombies - Regular Zombies.png";
 
     private float animTimer = 0f;
-    private final float animIntervalo = 1.0f; // velocidade da boca
+    private float animIntervalo = 1.0f; // velocidade da boca
     private float bocaOffsetY = 0f;
     private boolean bocaAberta = false;
 
@@ -55,9 +34,6 @@ public class Zombie implements Pool.Poolable{
     private final float comerIntervalo = 0.15f; // mais rápido que o normal
     public boolean comeuCerebro;
 
-    private float bracoOffsetX = 0f;
-    private float pernaExtOffsetX = 0f;
-    private float pernaIntOffsetX = 0f;
     private boolean animPhase = false; // false = fase 1, true = fase 2
 
     private static final float SPEED = 300f;
@@ -93,27 +69,6 @@ public class Zombie implements Pool.Poolable{
             cabecaZumbi = new TextureRegion(spritesheet, 1, 9, 53, 48);
             bocaZumbi   = new TextureRegion(spritesheet, 1, 86, 32, 15);
             cabeloZumbi   = new TextureRegion(spritesheet, 1, 120, 64, 31);
-
-            corpoZumbi = new TextureRegion(spritesheet, 1, 162, 53, 63);
-            gravataZumbi = new TextureRegion(spritesheet, 55, 162, 17, 30);
-            pescocoZumbi = new TextureRegion(spritesheet, 73, 162, 20, 21);
-
-            bracoExtZumbi = new TextureRegion(spritesheet, 1, 234, 17, 35);
-            danoBracoExtZumbi = new TextureRegion(spritesheet, 19, 234, 17, 35);
-            antebracoExtZumbi = new TextureRegion(spritesheet, 1, 270, 19, 28);
-            maoExtZumbi = new TextureRegion(spritesheet, 1, 299, 25, 27);
-
-            bracoIntZumbi = new TextureRegion(spritesheet, 55, 234, 15, 25);
-            antebracoIntZumbi = new TextureRegion(spritesheet, 55, 260, 19, 24);
-            maoIntZumbi = new TextureRegion(spritesheet, 55, 285, 20, 23);
-
-            pernaExtZumbi = new TextureRegion(spritesheet, 1, 340, 21, 39);
-            canelaExtZumbi = new TextureRegion(spritesheet, 23, 340, 24, 30);
-            peExtZumbi = new TextureRegion(spritesheet, 48, 340, 42, 21);
-
-            pernaIntZumbi = new TextureRegion(spritesheet, 91, 340, 15, 26) ;
-            canelaIntZumbi = new TextureRegion(spritesheet, 107, 340, 32, 36);
-            peIntZumbi = new TextureRegion(spritesheet, 140, 340, 27, 17);
         }
     }
 
@@ -135,11 +90,16 @@ public class Zombie implements Pool.Poolable{
 
         animTimer += delta;
         if (animTimer >= animIntervalo) {
-            animTimer -= animIntervalo;
+            animTimer -= animTimer;
             animPhase = !animPhase;
 
             if (!comendo) {
                 // boca devagar
+                animIntervalo = 1f;
+                bocaAberta = animPhase;
+                bocaOffsetY = bocaAberta ? -9f : -5f;
+            } else {
+                animIntervalo = 0.2f;
                 bocaAberta = animPhase;
                 bocaOffsetY = bocaAberta ? -9f : -5f;
             }
@@ -231,5 +191,13 @@ public class Zombie implements Pool.Poolable{
 
     public float getBocaW(float scale) { return 32 * scale; }
     public float getBocaH(float scale) { return 15 * scale; }
+
+    public void zumbiComendo(){
+        comendo = true;
+    }
+
+    public void zumbiNaoComendo(){
+        comendo = false;
+    }
 }
 

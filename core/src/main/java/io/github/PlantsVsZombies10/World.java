@@ -44,6 +44,11 @@ public class World {
     private Sound mordida;
     private AssetManager assetManager;
 
+    private boolean zombieReachedHouse = false;
+
+    public boolean hasZombieReachedHouse() { return zombieReachedHouse; }
+    public void resetZombieReachedHouse()  { zombieReachedHouse = false; }
+
     public void setGrid(FrontyardGrid frontyardGrid){
         this.frontyardGrid = frontyardGrid;
     }
@@ -140,6 +145,10 @@ public class World {
                 continue;
             }
 
+            if(zombie.position.x <= -53){
+                zombieReachedHouse = true;
+            }
+
             // Colisão zumbi vs plantas
             boolean colidiu = false;
             if (plantManager != null) {
@@ -162,10 +171,11 @@ public class World {
                     if (acertou) {
                         colidiu = true;
                         zombie.speed.set(0, 0);
+                        zombie.zumbiComendo();
 
                         zombie.danoTimer += delta;
                         if (zombie.danoTimer >= 0.5f) {
-                            zombie.danoTimer = 0f;
+                            zombie.danoTimer -= zombie.danoTimer;
                             plant.hp -= 34;
                             mordida.play();
                             particleManager.spawn(plantCX, plantCY, 6,
@@ -177,7 +187,8 @@ public class World {
             }
 
             if (!colidiu) {
-                zombie.danoTimer = 0f;
+                zombie.zumbiNaoComendo();
+                zombie.danoTimer -= zombie.danoTimer;
                 if (zombie.speed.isZero()) {
                     zombie.speed.set(-300f, 0);
                 }
