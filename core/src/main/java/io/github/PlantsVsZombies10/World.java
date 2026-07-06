@@ -55,6 +55,7 @@ public class World {
     public void setAssetManager(AssetManager assetManager) {
         this.assetManager = assetManager;
         mordida = assetManager.get("sounds/affects/SFX chompsoft.ogg", Sound.class);
+        sunDropManager.setAssetManager(assetManager);
     }
 
     public Array<Zombie> getActiveZombies() {

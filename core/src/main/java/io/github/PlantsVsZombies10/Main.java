@@ -61,9 +61,10 @@ public class Main extends ApplicationAdapter {
         assetManager = new AssetManager();
         Gdx.input.setInputProcessor(new GameInputProcessor(this));
 
-        assetManager.load("Plants/peashooter.png", Texture.class);
+        assetManager.load("Plants/peashooterIngame.png", Texture.class);
         assetManager.load("Bullets/pea-shooted.png", Texture.class);
-        assetManager.load("Plants/sunflower.png", Texture.class);
+        assetManager.load("Plants/sunflowerIngame.png", Texture.class);
+        assetManager.load("Bullets/sun PVZ.png", Texture.class);
 
         assetManager.load("Backgrounds/Background_Noite.jpg", Texture.class);
         assetManager.load("Backgrounds/Background.jpg", Texture.class);
@@ -272,14 +273,14 @@ public class Main extends ApplicationAdapter {
         sun = new Sun(150);
         plantManager = new PlantManager(frontyardGrid, assetManager);
         plantManager.setTextures(
-            assetManager.get("Plants/peashooter.png", Texture.class),
-            assetManager.get("Plants/sunflower.png", Texture.class)
+            assetManager.get("Plants/peashooterIngame.png", Texture.class),
+            assetManager.get("Plants/sunflowerIngame.png", Texture.class)
         );
         world.setPlantManager(plantManager);
 
         seedBar = new SeedBar(assetManager);
-        seedBar.setSlotTexture(0, assetManager.get("Plants/peashooter.png", Texture.class));
-        seedBar.setSlotTexture(1, assetManager.get("Plants/sunflower.png", Texture.class));
+        seedBar.setSlotTexture(0, assetManager.get("Plants/peashooterIngame.png", Texture.class));
+        seedBar.setSlotTexture(1, assetManager.get("Plants/sunflowerIngame.png", Texture.class));
     }
 
     public void setCameraMode(boolean followBrain) {

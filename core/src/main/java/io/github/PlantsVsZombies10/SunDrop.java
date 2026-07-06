@@ -22,7 +22,7 @@ public class SunDrop implements Pool.Poolable {
     private static final float IDLE_DURATION = 8f; // tempo parado antes de sumir sozinho
     private static final float FADE_DURATION = 1.5f; // começa a piscar/sumir faltando esse tempo
 
-    public static final float RADIUS = 22f; // raio usado pro desenho e pra detectar o clique
+    public static final float RADIUS = 44f; // raio usado pro desenho e pra detectar o clique
 
     public int sunAmount;
     public boolean alive;

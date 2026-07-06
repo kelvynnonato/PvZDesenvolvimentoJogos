@@ -46,13 +46,13 @@ public class PlantManager {
     private Plant criarPlanta(SeedSlot slot){
         switch (slot.type){
             case SUNFLOWER: {
-                Plant sunflower = new Plant(sunflowerTexture, 0.12f, 300, slot.cost, 5f, Plant.PlantType.SUNFLOWER);
+                Plant sunflower = new Plant(sunflowerTexture, 0.25f, 300, slot.cost, 5f, Plant.PlantType.SUNFLOWER);
                 sunflower.sunAmount = 25; // quanto sol ela gera a cada ciclo
                 return sunflower;
             }
             case PEASHOOTER:
             default:
-                return new Plant(peashooterTexture, 0.18f, 300, slot.cost, 1.5f, Plant.PlantType.PEASHOOTER);
+                return new Plant(peashooterTexture, 0.25f, 300, slot.cost, 1.5f, Plant.PlantType.PEASHOOTER);
         }
     }
 

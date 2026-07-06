@@ -1,6 +1,9 @@
 package io.github.PlantsVsZombies10;
 
+import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.utils.Array;
@@ -13,7 +16,8 @@ public class SunDropManager {
         protected SunDrop newObject() { return new SunDrop(); }
     };
 
-    private final ShapeRenderer shape = new ShapeRenderer();
+    private final SpriteBatch batch = new SpriteBatch();
+    private Texture sunTexture;
 
     // Distância que o sol cai a partir de onde nasceu, até "pousar"
     private static final float QUEDA_ALTURA = 45f;
@@ -21,6 +25,10 @@ public class SunDropManager {
     // Variação aleatória na posição de nascimento, pra não sair sempre no mesmo pixel
     private static final float OFFSET_RANGE_X = 28f;
     private static final float OFFSET_RANGE_Y = 18f;
+
+    public void setAssetManager(AssetManager assetManager) {
+        sunTexture = assetManager.get("Bullets/sun PVZ.png", Texture.class);
+    }
 
     public void spawn(float x, float y, int sunAmount) {
         float spawnX = x + MathUtils.random(-OFFSET_RANGE_X, OFFSET_RANGE_X);
@@ -59,25 +67,23 @@ public class SunDropManager {
     }
 
     public void render(OrthographicCamera cam) {
-        if (activeSuns.size == 0) return;
+        if (activeSuns.size == 0 || sunTexture == null) return;
 
-        shape.setProjectionMatrix(cam.combined);
-        shape.begin(ShapeRenderer.ShapeType.Filled);
+        float size = SunDrop.RADIUS * 2f;
+
+        batch.setProjectionMatrix(cam.combined);
+        batch.begin();
         for (SunDrop sun : activeSuns) {
             float alpha = sun.getAlpha();
 
-            // círculo externo (amarelo mais forte) + núcleo mais claro no centro,
-            // pra dar uma sensação de brilho sem precisar de textura
-            shape.setColor(1f, 0.82f, 0.05f, alpha);
-            shape.circle(sun.x, sun.y, SunDrop.RADIUS);
-
-            shape.setColor(1f, 0.95f, 0.55f, alpha);
-            shape.circle(sun.x, sun.y, SunDrop.RADIUS * 0.55f);
+            batch.setColor(1f, 1f, 1f, alpha);
+            batch.draw(sunTexture, sun.x - SunDrop.RADIUS, sun.y - SunDrop.RADIUS, size, size);
         }
-        shape.end();
+        batch.setColor(1f, 1f, 1f, 1f);
+        batch.end();
     }
 
     public void dispose() {
-        shape.dispose();
+        batch.dispose();
     }
 }
