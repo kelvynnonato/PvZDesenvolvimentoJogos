@@ -10,7 +10,7 @@ import static com.badlogic.gdx.math.MathUtils.clamp;
 
 public class BackgroundManager {
     private final Texture[] backgrounds;
-    private int currentBackground;
+    private int currentBackground = 1;
     private float bgTimer = 0f;
     private float bgAlpha = 1f;
     private boolean fading = false;
@@ -40,6 +40,10 @@ public class BackgroundManager {
         night.setLooping(true);
         night.setVolume(2.0f);
         night.play();
+    }
+
+    public boolean isDay() {
+        return currentBackground == 1;
     }
 
     public void update(float delta) {

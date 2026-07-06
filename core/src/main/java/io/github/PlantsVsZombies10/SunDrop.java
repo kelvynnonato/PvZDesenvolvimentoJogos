@@ -16,7 +16,8 @@ public class SunDrop implements Pool.Poolable {
     private State state;
 
     private float fallTimer;
-    private static final float FALL_DURATION = 0.8f; // tempo de queda
+    private float fallDuration; // tempo de queda - varia conforme quem gerou o sol
+    private static final float DEFAULT_FALL_DURATION = 0.8f;
 
     private float idleTimer;
     private static final float IDLE_DURATION = 8f; // tempo parado antes de sumir sozinho
@@ -28,11 +29,16 @@ public class SunDrop implements Pool.Poolable {
     public boolean alive;
 
     public void init(float x, float startY, float targetY, int sunAmount) {
+        init(x, startY, targetY, sunAmount, DEFAULT_FALL_DURATION);
+    }
+
+    public void init(float x, float startY, float targetY, int sunAmount, float fallDuration) {
         this.x = x;
         this.startY = startY;
         this.targetY = targetY;
         this.y = startY;
         this.sunAmount = sunAmount;
+        this.fallDuration = fallDuration;
         this.state = State.FALLING;
         this.fallTimer = 0f;
         this.idleTimer = 0f;
@@ -43,7 +49,7 @@ public class SunDrop implements Pool.Poolable {
         switch (state) {
             case FALLING:
                 fallTimer += delta;
-                float t = Math.min(fallTimer / FALL_DURATION, 1f);
+                float t = Math.min(fallTimer / fallDuration, 1f);
                 // ease-out: cai rápido e desacelera perto do chão
                 float eased = 1f - (1f - t) * (1f - t);
                 y = startY + (targetY - startY) * eased;
@@ -95,6 +101,7 @@ public class SunDrop implements Pool.Poolable {
     @Override
     public void reset() {
         x = y = startY = targetY = fallTimer = idleTimer = 0f;
+        fallDuration = DEFAULT_FALL_DURATION;
         sunAmount = 0;
         state = State.FALLING;
         alive = false;

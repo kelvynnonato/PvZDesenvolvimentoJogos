@@ -80,7 +80,7 @@ public class PlantManager {
 
     // Atualiza todas as plantas
     // Retorna array com posicoes de disparos
-    public Array<float[]> update(float delta){
+    public Array<float[]> update(float delta, boolean isDay){
         Array<float[]> shots = new Array<>();
         pendingSunSpawns.clear();
 
@@ -103,6 +103,7 @@ public class PlantManager {
                         shots.add(new float[]{planta.getMuzzleX(), planta.getMuzzleY()});
                         break;
                     case SUNFLOWER:
+                        if (!isDay) break;
                         float centerX = planta.x + planta.getWidth()  / 2f;
                         float centerY = planta.y + planta.getHeight() / 2f;
                         pendingSunSpawns.add(new float[]{centerX, centerY, planta.sunAmount});

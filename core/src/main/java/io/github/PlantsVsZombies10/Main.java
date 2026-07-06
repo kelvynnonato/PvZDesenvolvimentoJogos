@@ -56,6 +56,9 @@ public class Main extends ApplicationAdapter {
     private SeedBar seedBar;
     private Sun sun;
 
+    private float skySunTimer = 0f;
+    private float skySunNextInterval = MathUtils.random(15f, 20f);
+
     @Override
     public void create() {
         assetManager = new AssetManager();
@@ -125,12 +128,21 @@ public class Main extends ApplicationAdapter {
         seedBar.update(delta);
 
         // Plantas atiram
-        Array<float[]> shots = plantManager.update(delta);
+        boolean isDay = backgroundManager.isDay();
+        Array<float[]> shots = plantManager.update(delta, isDay);
         for (float[] shot : shots) {
             world.spawnPea(shot[0], shot[1]);
         }
         for (float[] sunSpawn : plantManager.getPendingSunSpawns()) {
             world.spawnSunDrop(sunSpawn[0], sunSpawn[1], (int) sunSpawn[2]);
+        }
+        if (isDay) {
+            skySunTimer += delta;
+            if (skySunTimer >= skySunNextInterval) {
+                skySunTimer = 0f;
+                skySunNextInterval = MathUtils.random(15f, 20f);
+                spawnSkySun();
+            }
         }
 
         gameTime += delta;
@@ -243,6 +255,17 @@ public class Main extends ApplicationAdapter {
         }
     }
 
+    private void spawnSkySun() {
+        int col = MathUtils.random(0, frontyardGrid.getCols() - 1);
+        int row = MathUtils.random(0, frontyardGrid.getRows() - 1);
+
+        Vector2 tileBottomLeft = frontyardGrid.tileBottomLeft(col, row);
+        float targetX = tileBottomLeft.x + frontyardGrid.getTileW() / 2f;
+        float targetY = tileBottomLeft.y + frontyardGrid.getTileH() / 2f;
+
+        world.spawnSkySunDrop(targetX, targetY, 25);
+    }
+
     private void onAssetsLoaded(){
         menu.stop();
         menu.dispose();
@@ -257,7 +280,7 @@ public class Main extends ApplicationAdapter {
             assetManager.get("Backgrounds/Background_Noite.jpg", Texture.class),
             assetManager.get("Backgrounds/Background.jpg", Texture.class)
         };
-        backgroundManager = new BackgroundManager(bgs, 10f, -200, 5f, assetManager);
+        backgroundManager = new BackgroundManager(bgs, 100f, -200, 5f, assetManager);
 
         zombie1 = assetManager.get("sounds/affects/Voices groan.ogg", Sound.class);
         zombie2 = assetManager.get("sounds/affects/Voices groan2.ogg", Sound.class);

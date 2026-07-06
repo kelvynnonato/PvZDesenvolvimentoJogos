@@ -28,6 +28,9 @@ public class SunDropManager {
     private static final float OFFSET_RANGE_X = 28f;
     private static final float OFFSET_RANGE_Y = 18f;
 
+    private static final float SKY_FALL_DURATION = 1.6f;
+    private static final float SKY_START_OFFSET = 80f;
+
     public void setAssetManager(AssetManager assetManager) {
         sunTexture = assetManager.get("Bullets/sun PVZ.png", Texture.class);
         sunColect = assetManager.get("sounds/affects/points.ogg", Sound.class);
@@ -39,6 +42,14 @@ public class SunDropManager {
 
         SunDrop sun = sunPool.obtain();
         sun.init(spawnX, spawnY, spawnY - QUEDA_ALTURA, sunAmount);
+        activeSuns.add(sun);
+    }
+
+    public void spawnFromSky(float targetX, float targetY, int sunAmount) {
+        float startY = com.badlogic.gdx.Gdx.graphics.getHeight() + SKY_START_OFFSET;
+
+        SunDrop sun = sunPool.obtain();
+        sun.init(targetX, startY, targetY, sunAmount, SKY_FALL_DURATION);
         activeSuns.add(sun);
     }
 

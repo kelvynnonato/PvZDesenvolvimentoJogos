@@ -100,6 +100,10 @@ public class World {
         sunDropManager.spawn(x, y, sunAmount);
     }
 
+    public void spawnSkySunDrop(float targetX, float targetY, int sunAmount) {
+        sunDropManager.spawnFromSky(targetX, targetY, sunAmount);
+    }
+
     public void updateSunDrops(float delta) {
         sunDropManager.update(delta);
     }
